@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Liberty RealWorld Example App - Architecture Diagram</title>
+    <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Header Design */
+        .header {
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .tech-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tech-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Sub-header with Controls */
+        .controls {
+            background: #f1f5f9;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .nav-link {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            color: #3730a3;
+            text-decoration: underline;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .zoom-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .zoom-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .zoom-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #zoomIndicator {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 16px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Main Content Layout */
+        .content {
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .diagram-container {
+            flex: 1;
+            overflow: auto;
+            background: #f8fafc;
+            position: relative;
+            padding: 40px;
+        }
+
+        #diagramWrapper {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            transform-origin: top left;
+        }
+
+        /* Mermaid Diagram Styling */
+        #mermaid-diagram {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin: 0 auto;
+            display: inline-block;
+            height:100%;
+        }
+
+        /* MANDATORY: Extra large, readable nodes with optimized text sizing */
+        #mermaid-diagram .node rect {
+            min-width: 400px !important;
+            min-height: 120px !important;
+            rx: 12px !important;
+            ry: 12px !important;
+        }
+
+        #mermaid-diagram .node text {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            line-height: 1.3 !important;
+        }
+
+        #mermaid-diagram .node .label {
+            padding: 20px 25px !important;
+        }
+
+        #mermaid-diagram .node .nodeLabel {
+            font-size: 20px !important;
+            font-weight: 800 !important;
+        }
+
+        #mermaid-diagram .cluster rect {
+            stroke-width: 2px !important;
+            rx: 15px !important;
+            ry: 15px !important;
+            min-height: 180px !important;
+        }
+
+        #mermaid-diagram .cluster text {
+            font-size: 28px !important;
+            font-weight: 800 !important;
+        }
+
+        /* MANDATORY: Override all text sizes for consistency */
+        #mermaid-diagram text {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+        }
+
+        #mermaid-diagram .edgeLabel {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+        }
+
+        #mermaid-diagram .node text tspan {
+            font-size: inherit !important;
+        }
+
+        /* Node Color Schemes */
+        .rest-api { fill: #3b82f6; stroke: #2563eb; color: white; }
+        .domain { fill: #10b981; stroke: #059669; color: white; }
+        .dao { fill: #f59e0b; stroke: #d97706; color: white; }
+        .security { fill: #ef4444; stroke: #dc2626; color: white; }
+        .database { fill: #8b5cf6; stroke: #7c3aed; color: white; }
+        .external { fill: #64748b; stroke: #475569; color: white; }
+        .config { fill: #06b6d4; stroke: #0891b2; color: white; }
+
+        /* Footer */
+        .footer {
+            background: #f1f5f9;
+            padding: 12px 24px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        /* GitHub Repository Status */
+        .github-status {
+            background: #dcfce7;
+            color: #166534;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .github-status.error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏗️ Open Liberty RealWorld Example App - Architecture</h1>
+        <div class="tech-badges">
+            <span class="tech-badge">Java 8</span>
+            <span class="tech-badge">Open Liberty</span>
+            <span class="tech-badge">MicroProfile 3.0</span>
+            <span class="tech-badge">JAX-RS</span>
+            <span class="tech-badge">JPA</span>
+            <span class="tech-badge">Derby</span>
+            <span class="tech-badge">Maven</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="nav-links">
+            <a href="../PROJECT_DOCUMENTATION.md" class="nav-link">📚 Documentation</a>
+            <a href="https://github.com/jitesh-nagarro/openliberty-realworld-example-app" class="nav-link" target="_blank">📦 GitHub Repository</a>
+            <a href="/health" class="nav-link">💚 Health Check</a>
+        </div>
+        <div class="github-status">
+            ✅ GitHub repository detected - click components to view source code
+        </div>
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="updateZoom(currentZoom - zoomStep)">Zoom Out</button>
+            <span id="zoomIndicator">100%</span>
+            <button class="zoom-btn" onclick="updateZoom(currentZoom + zoomStep)">Zoom In</button>
+            <button class="zoom-btn" onclick="fitToScreen()">Fit Screen</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="diagram-container" id="diagramContainer">
+            <div id="diagramWrapper">
+                <div id="mermaid-diagram" class="loading">
+                    Loading architecture diagram...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        🚀 Interactive Architecture Diagram - Click components to explore source code on GitHub
+    </div>
+
+    <script>
+        // MANDATORY: Compact spacing configuration for maximum content density
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                nodeSpacing: 60,
+                rankSpacing: 80,
+                curve: 'basis',
+                padding: 20, 
+                fontSize: 28,
+                useMaxWidth: false,
+                htmlLabels: true
+            },
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#ffffff',
+                primaryBorderColor: '#2563eb',
+                lineColor: '#64748b',
+                sectionBkgColor: '#f1f5f9',
+                altSectionBkgColor: '#e2e8f0',
+                gridColor: '#e2e8f0',
+                tertiaryColor: '#f8fafc',
+                fontSize: '28px',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+        });
+
+        const diagramDefinition = `
+flowchart TD
+    %% External Layer
+    subgraph "External Dependencies"
+        FRONTEND["🌐 Frontend Applications<br/>localhost:4100<br/>(CORS configured)"]:::external
+        POSTMAN["📬 Postman Collection<br/>API Testing Tools<br/>utility/Conduit.postman_collection.json"]:::external
+    end
+
+    %% REST API Layer
+    subgraph "REST API Layer (JAX-RS)"
+        JAXRS["🔌 JAX-RS Application<br/>@ApplicationPath('/api')<br/>Entry point for all API requests"]:::rest-api
+        USERS["👥 Users API<br/>Registration, Login, Profile<br/>JWT token management"]:::rest-api
+        ARTICLES["📝 Articles API<br/>CRUD operations, Feed<br/>Favorite/Unfavorite actions"]:::rest-api
+        PROFILES["👤 Profiles API<br/>User profiles, Follow/Unfollow<br/>Social interactions"]:::rest-api
+        COMMENTS["💬 Comments API<br/>Article comments<br/>Create/Delete operations"]:::rest-api
+        TAGS["🏷️ Tags API<br/>Tag management<br/>Article categorization"]:::rest-api
+        HEALTH["💚 Health Endpoint<br/>MicroProfile Health<br/>Application status monitoring"]:::rest-api
+    end
+
+    %% Security Layer
+    subgraph "Security & Authentication"
+        JWT["🔐 JWT Generator<br/>Token creation & validation<br/>MicroProfile JWT integration"]:::security
+        AUTH["🛡️ Authentication<br/>@RolesAllowed('users')<br/>@PermitAll for public endpoints"]:::security
+    end
+
+    %% Business Logic Layer
+    subgraph "Business Logic (Core Domain)"
+        USER_ENTITY["👤 User Entity<br/>AbstractUser → User<br/>Email, username, password"]:::domain
+        ARTICLE_ENTITY["📄 Article Entity<br/>Title, description, body<br/>Auto-generated slug"]:::domain
+        COMMENT_ENTITY["💭 Comment Entity<br/>Article comments<br/>Author relationship"]:::domain
+        PROFILE_ENTITY["📋 Profile Entity<br/>User profiles<br/>Following relationships"]:::domain
+    end
+
+    %% Data Access Layer
+    subgraph "Data Access Layer"
+        USER_DAO["👥 User DAO<br/>User CRUD operations<br/>Login validation, Profile management"]:::dao
+        ARTICLE_DAO["📝 Article DAO<br/>Article CRUD operations<br/>Tag management, Comments"]:::dao
+        USER_CONTEXT["🔄 User Context<br/>Business logic orchestration<br/>Follow/Favorite operations"]:::dao
+    end
+
+    %% Persistence Layer
+    subgraph "Persistence Layer (JPA)"
+        JPA["🗃️ JPA Persistence<br/>EclipseLink ORM<br/>realWorld-jpa unit"]:::database
+        DERBY["🗄️ Derby Database<br/>Embedded database<br/>Auto-create tables"]:::database
+    end
+
+    %% Configuration Layer
+    subgraph "Configuration & Runtime"
+        LIBERTY["🚀 Open Liberty Server<br/>MicroProfile 3.0<br/>JPA 2.2, CDI, JAX-RS"]:::config
+        SERVER_XML["⚙️ server.xml<br/>CORS, JWT, DataSource<br/>HTTP endpoints configuration"]:::config
+        POM["📦 Maven POM<br/>Dependencies & build<br/>Liberty Maven plugin"]:::config
+    end
+
+    %% Error Handling
+    VALIDATION["⚠️ Validation Messages<br/>Error response handling<br/>HTTP status codes"]:::security
+
+    %% Data Flow Connections
+    FRONTEND -->|"HTTP Requests"| JAXRS
+    POSTMAN -->|"API Testing"| JAXRS
+    
+    JAXRS --> USERS
+    JAXRS --> ARTICLES
+    JAXRS --> PROFILES
+    JAXRS --> COMMENTS
+    JAXRS --> TAGS
+    JAXRS --> HEALTH
+
+    USERS -->|"@Inject"| USER_DAO
+    ARTICLES -->|"@Inject"| ARTICLE_DAO
+    PROFILES -->|"@Inject"| USER_CONTEXT
+    COMMENTS -->|"@Inject"| ARTICLE_DAO
+
+    USER_DAO -->|"JPA Operations"| USER_ENTITY
+    ARTICLE_DAO -->|"JPA Operations"| ARTICLE_ENTITY
+    ARTICLE_DAO -->|"JPA Operations"| COMMENT_ENTITY
+    USER_CONTEXT -->|"JPA Operations"| PROFILE_ENTITY
+
+    USER_ENTITY -->|"Persistence"| JPA
+    ARTICLE_ENTITY -->|"Persistence"| JPA
+    COMMENT_ENTITY -->|"Persistence"| JPA
+    PROFILE_ENTITY -->|"Persistence"| JPA
+
+    JPA -->|"JDBC"| DERBY
+
+    JWT -->|"Token Validation"| USERS
+    JWT -->|"Token Validation"| ARTICLES
+    JWT -->|"Token Validation"| PROFILES
+    JWT -->|"Token Validation"| COMMENTS
+
+    AUTH -->|"Security Annotations"| USERS
+    AUTH -->|"Security Annotations"| ARTICLES
+    AUTH -->|"Security Annotations"| PROFILES
+    AUTH -->|"Security Annotations"| COMMENTS
+
+    USERS -->|"Error Responses"| VALIDATION
+    ARTICLES -->|"Error Responses"| VALIDATION
+    PROFILES -->|"Error Responses"| VALIDATION
+    COMMENTS -->|"Error Responses"| VALIDATION
+
+    LIBERTY -->|"Runtime Container"| JAXRS
+    SERVER_XML -->|"Configuration"| LIBERTY
+    POM -->|"Build & Deploy"| LIBERTY
+
+    %% GitHub Click Events (using detected repository URL)
+    click JAXRS href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/rest/JaxrsApplication.java" _blank
+    click USERS href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/rest/UsersAPI.java" _blank
+    click ARTICLES href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/rest/ArticlesAPI.java" _blank
+    click PROFILES href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/rest/ProfilesAPI.java" _blank
+    click TAGS href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/rest/TagsAPI.java" _blank
+    click HEALTH href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/rest/HealthEndpoint.java" _blank
+    click JWT href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/security/JwtGenerator.java" _blank
+    click USER_ENTITY href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/core/user/User.java" _blank
+    click ARTICLE_ENTITY href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/core/article/Article.java" _blank
+    click COMMENT_ENTITY href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/core/comments/Comment.java" _blank
+    click PROFILE_ENTITY href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/core/user/Profile.java" _blank
+    click USER_DAO href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/dao/UserDao.java" _blank
+    click ARTICLE_DAO href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/dao/ArticleDao.java" _blank
+    click USER_CONTEXT href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/dao/UserContext.java" _blank
+    click VALIDATION href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/java/application/errors/ValidationMessages.java" _blank
+    click SERVER_XML href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/src/main/liberty/config/server.xml" _blank
+    click POM href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/pom.xml" _blank
+    click POSTMAN href "https://github.com/jitesh-nagarro/openliberty-realworld-example-app/blob/main/utility/Conduit.postman_collection.json" _blank
+
+    %% CSS Classes for Color Coding
+    classDef rest-api fill:#3b82f6,stroke:#2563eb,color:#ffffff,stroke-width:3px
+    classDef domain fill:#10b981,stroke:#059669,color:#ffffff,stroke-width:3px
+    classDef dao fill:#f59e0b,stroke:#d97706,color:#ffffff,stroke-width:3px
+    classDef security fill:#ef4444,stroke:#dc2626,color:#ffffff,stroke-width:3px
+    classDef database fill:#8b5cf6,stroke:#7c3aed,color:#ffffff,stroke-width:3px
+    classDef external fill:#64748b,stroke:#475569,color:#ffffff,stroke-width:3px
+    classDef config fill:#06b6d4,stroke:#0891b2,color:#ffffff,stroke-width:3px
+`;
+
+        // MANDATORY: Enhanced zoom functionality with compact layout
+        let currentZoom = 1.0;
+        const zoomStep = 0.2;
+        const minZoom = 0.2;
+        const maxZoom = 5.0;
+
+        function calculateOptimalZoom() {
+            const container = document.querySelector('.diagram-container');
+            const wrapper = document.querySelector('#diagramWrapper');
+            
+            if (!container || !wrapper) return 1.0;
+
+            // Reset to measure natural size
+            wrapper.style.transform = 'scale(1)';
+            
+            // Get available space (account for padding)
+            const containerRect = container.getBoundingClientRect();
+            const availableWidth = containerRect.width - 80;
+            const availableHeight = containerRect.height - 80;
+            
+            // Measure diagram natural size
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const diagramWidth = wrapperRect.width;
+            const diagramHeight = wrapperRect.height;
+            
+            // Calculate scale to fit with 90% utilization
+            const scaleX = (availableWidth * 0.90) / diagramWidth;
+            const scaleY = (availableHeight * 0.90) / diagramHeight;
+            
+            // Use the smaller scale to ensure complete visibility
+            const optimalZoom = Math.min(scaleX, scaleY);
+            
+            // Ensure within zoom limits
+            return Math.max(Math.min(optimalZoom, maxZoom), minZoom);
+        }
+
+        function updateZoom(zoom) {
+            currentZoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+            const wrapper = document.getElementById('diagramWrapper');
+            
+            wrapper.style.transform = `scale(${currentZoom})`;
+            document.getElementById('zoomIndicator').textContent = `${Math.round(currentZoom * 100)}%`;
+        }
+
+        function fitToScreen() {
+            const optimalZoom = calculateOptimalZoom();
+            currentZoom = optimalZoom;
+            updateZoom(currentZoom);
+            
+            // Center the diagram after fitting
+            const container = document.querySelector('.diagram-container');
+            if (container) {
+                container.scrollTop = 0;
+                container.scrollLeft = 0;
+            }
+        }
+
+        function initializeOptimalZoom() {
+            setTimeout(() => {
+                const diagram = document.querySelector('#mermaid-diagram svg');
+                if (!diagram) {
+                    setTimeout(initializeOptimalZoom, 200);
+                    return;
+                }
+                
+                const optimalZoom = calculateOptimalZoom();
+                currentZoom = optimalZoom;
+                updateZoom(currentZoom);
+
+                console.log(`Auto-fit: Set zoom to ${Math.round(optimalZoom * 100)}% for optimal visibility`);
+            }, 500);
+        }
+
+        // Initialize diagram
+        mermaid.render('mermaid-svg', diagramDefinition).then(function(result) {
+            const diagramElement = document.getElementById('mermaid-diagram');
+            diagramElement.innerHTML = result.svg;
+            
+            // Apply intelligent auto-sizing
+            initializeOptimalZoom();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                if (currentZoom > 0) {
+                    fitToScreen();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
